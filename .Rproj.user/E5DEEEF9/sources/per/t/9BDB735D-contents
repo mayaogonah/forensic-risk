@@ -1,0 +1,64 @@
+# set working directory ####
+setwd("C:/Users/mayao/OneDrive - Nexus365/umbrella review/research documentation/data")
+
+# loading packages ####
+library(effectsize)
+library(metafor)
+library(DescTools)
+library(graphPAF)
+library(boot)
+
+?graphPAF
+?paf_miettinen
+?paf_levin
+?PAF_calc_discrete
+
+# examples from graphPAF the vignette ###
+paf_miettinen(conf_prev=c(0.843, 0.855),
+              conf_RR = c(1.427, 1.806),
+              conf_RRu = c(1.514, 1.833)
+              )
+
+paf_levin(conf_prev = c(0.843, 0.855),
+          conf_RR = c(1.427, 1.806)
+          )
+
+# calculating population attributable fractions using Levin's formula ####
+
+p <- 0.12
+z <- 1.96
+RRu <- 4.16
+
+n <- (2508948+7352205)
+
+
+paf_levin(prev = p,
+          RR = RRu
+)
+
+
+# Calculate PAF
+PAF <- p * (RRu - 1) / (1 + p * (RRu - 1))
+
+# Convert PAF to percentage
+PAF_percentage <- PAF * 100
+
+# Calculate standard error (SE)
+SE <- sqrt(p * (1 - p) / (n * (RRu - 1)^2))
+
+# Calculate margin of error
+MOE <- z * SE
+
+# Calculate 95% CI
+lower_CI <- (PAF - MOE) * 100
+upper_CI <- (PAF + MOE) * 100
+
+# Print the results
+cat("Population Attributable Fraction (PAF):", PAF_percentage, "%\n")
+cat("95% Confidence Interval:", lower_CI, "% to", upper_CI, "%\n")
+
+# clear environment ###
+rm(list = ls())
+
+# clear console ###
+cat("\014")  # ctrl+L

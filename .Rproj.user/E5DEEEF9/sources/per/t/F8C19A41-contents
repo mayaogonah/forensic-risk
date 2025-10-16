@@ -1,0 +1,29 @@
+# set working directory ####
+setwd("C:/Users/mayao/OneDrive - Nexus365/umbrella review/research documentation/data")
+
+# loading packages ####
+library(openxlsx)
+library(tidyverse)
+library(robvis)
+library(ggplot2)
+?robvis
+
+data_rob1 <- read.xlsx("amstar2_rob.xlsx")
+ 
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 2.41)
+
+set.seed(42)
+
+rob_tools()
+rob_summary(data, tool = "Generic")
+
+# clear environment ###
+rm(list = ls())
+
+# clear console ###
+cat("\014")  # ctrl+L
