@@ -1,0 +1,356 @@
+---
+title: "Violence Risk Assessment in Forensic Mental Health Services"
+subtitle: "In this systematic review, we evaluated the predictive performance of tools used to assess violence risk in forensic mental health, where they are routinely administered. This document is an accompanying file of the paper: Ogonah et al. <strong>Violence risk assessment instruments in forensic psychiatric populations: a systematic review and meta-analysis.</strong> <i>Lancet Psychiatry.</i> Oct 2023. <a href='https://www.thelancet.com/journals/lanpsy/article/PIIS2215-0366(23)00256-0/fulltext'>10.1016/S2215-0366(23)00256-0.</a>"
+
+format:
+  lumo-html: 
+    #logo:  #optional: add your logo to the doc header
+    primary-color: "#b5cef7"
+    github-repo: "https://github.com/mayaogonah" 
+    self-contained: true
+    is-particlejs-enabled: true  # optional: display interactive particles in the doc header
+    #bg-image:  # optional: add a background image
+
+author: Maya Ogonah, University of Oxford
+date: today
+    
+---
+
+## Libraries and data
+
+First, load all necessary packages.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+if (!require("pacman")) install.packages("pacman")
+
+library(pacman)
+pacman::p_load(
+  tidyverse, # data wrangling
+  openxlsx, # opening excel spreadsheets
+  metafor, # meta-analysis / forest plots
+  maps, # map / spatial objects
+  ggplot2, # data visualisation
+  rJava, # for venneuler package
+  venneuler # venn diagram 
+)
+
+```
+
+Then load the extracted data. 
+```{r}
+# data for the meta-analysis
+data.meta <- read.xlsx("data/data.meta.all.xlsx")
+
+# data for the geographical map 
+world.data <- read.xlsx("data/worldcount.xlsx")
+
+# violent recividivsm
+data.violence1 <- read.xlsx("data/data.violence1.xlsx")
+data.violence2 <- read.xlsx("data/data.violence2.xlsx")
+
+# general recividivsm 
+data.general <- read.xlsx("data/data.general.xlsx")
+
+# sexual recidivism
+data.sexual <- read.xlsx("data/data.sexual.xlsx")
+
+# time-at-risk 
+data.time <- read.xlsx("data/data.time-risk.xlsx")
+data.time <- arrange(data.time, desc(data.time$colour))
+
+```
+
+## Prisma flow diagram 
+
+::: {.cell .page-columns .page-full .column-screen .grey-section}
+The Prisma flow diagram template was downloaded from [Prisma Statement](https://www.prisma-statement.org/prisma-2020-flow-diagram) and completed manually.
+:::
+
+
+## Quality assessment 
+
+::: {.cell .page-columns .page-full .column-screen .grey-section}
+The [Robvis tool](https://mcguinlu.shinyapps.io/robvis/) was used to create the risk of bias diagram. 
+:::
+
+## Meta-analysis
+
+When a tool had been validated at least three times for the outcome, we applied a random effects model, using the inverse-variance method, for pooling the logit transformation of the area under the curve and confidence intervals. The predictive performance of each risk assessment instrument was pooled across all external validation studies regardless of study design (eg, including both retrospective and prospective cohort studies). To reduce bias, only independent validation studies with a sample size that is consistent with adequate statistical power were included in the primary analysis. We set this threshold at n=100, as a balance between the current methodological recommendations for minimum event numbers for validation studies and excluding too large a proportion of existing literature.
+
+All figures included in the main manuscript were redrawn into *The Lancet* style by in-house Illustrators. 
+```{r, fig.height=18, fig.width=15}
+shapes = c(15, 17, 9)
+shapes <- shapes[as.numeric(data.meta$group)]
+
+colours = c("gray28", "gray28", "deepskyblue4")
+colours <- colours[as.numeric(data.meta$group)]
+
+forest(x = data.meta$auc, ci.lb = data.meta$auc.lower, ci.ub = data.meta$auc.upper, 
+       slab = data.meta$`author(s).and.year`,
+       psize = rep(1, length(data.meta$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(-0.5, 56), xlim = c(-0.2, 1.15),
+       ilab = c(data.meta$samplesize), ilab.xpos = 0.2,
+       at = c(0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
+       rows = c(0:3, 8:11, 14:17, 22:26, 29:33, 36:45, 48:51),
+       cex = 1.15, header = "Author(s) and Year",
+       pch = shapes, col = colours)
+
+
+# add text to header ####
+op <- par(cex=1.15, font=2)
+text(0.2, 55, "Sample size")
+text(0.965, 55.1, "AUC")
+
+par(op)
+op <- par(cex=1.15, font=4)
+text(-0.2, c(4, 12, 18, 27, 34, 46, 52), pos = 4,
+     c("Static99", "PCL:SV", "HCR20v2", "VRAG", "Static99", "HCR20v2", "H10"))
+
+par(op)
+ op <- par(cex=1.2, font=2)
+text(-0.2, c(5, 19, 53), pos = 4,
+     c("Sexual Recidivism", "General recidivism", "Violent recidivism"))
+
+## add notes ####
+par(op)
+op <- par(cex=1.0, font=2)
+text(-.3, -0.5, pos = 4, cex = 1.0, paste("Note"))
+
+par(op)
+op <- par(cex=1.0, font=3)
+text(-.3, -1.5, pos = 4, cex = .75, paste("Gray et al (2007)* includes the non-ID sample"))
+
+```
+
+:::{.callout-note appearance="simple"}
+**Meta-analysis of independent validation studies with a sample size of more than 100 participants**
+
+Meta-analyses by outcome type (violent, general, and sexual recidivism) and by risk assessment instrument.
+AUC=area under curve. HCRv2=Historial, Clinical, Risk Management-20 version 2. PCL:SV=Psychopathy Checklist—
+Screening Version. RE=random effects. VRAG=Violence Risk Appraisal Guide.
+:::
+
+## Supplementary materials
+### Geographical coverage
+
+Geographical coverage of reviewed study samples.
+```{r}
+world_map <- map_data("world")
+count.map <- left_join(world.data, world_map, by = "region")
+```
+
+
+```{r, fig.height=9, fig.width=14, warning=FALSE}
+ggplot(data = count.map, aes(x = long, y = lat, group = group))+
+  geom_polygon(aes(fill = study.count), colour = "white")+
+  theme_void()+
+  scale_fill_viridis_c(option = "rocket",
+                       trans = "log", breaks=c(1, 3, 5, 7, 9, 11),
+                       name ="Study count", guide = guide_legend(keyheight = unit(8, units = "mm"), keywidth = unit(32, "mm"), label.position = "bottom", title.position = 'top', nrow=6) ) +
+  theme(
+    text = element_text(color = "#22211d"),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.background = element_rect(fill = "#f5f5f2", color = NA),
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    legend.position = c(.15, 0.35),
+    plot.title = element_text(size= 40, hjust=0.01, color = "#4e4d47", margin = margin(b = 0.5, t = 0.4, l = 2, unit = "cm")),
+    plot.subtitle = element_text(size= 40, hjust=0.01, color = "#4e4d47", margin = margin(b = 0.5, t = 0.43, l = 2, unit = "cm"))
+  )
+```
+
+
+### AUCs for predicting violent recidivism
+
+Area under the curve statistics for all validations for risk assessment tools used to predict violent recidivism (including non-independent and studies with small sample sizes).
+```{r, fig.height=16, fig.width=14}
+shapes = c(15, 17)
+shapes <- shapes[as.numeric(data.violence1$group)]
+
+forest(x = data.violence1$auc, ci.lb = data.violence1$auc.lb, ci.ub = data.violence1$auc.ub, 
+       slab = data.violence1$`author(s).and.year`,
+       psize = rep(1, length(data.violence1$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(-1, 100), xlim = c(-0.8, 1.25),
+       ilab = c(data.violence1$samplesize), ilab.xpos = -0.2,
+       at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
+       rows = c(0, 3, 6, 9:20, 23:26, 29, 32, 35, 38, 41, 44, 47, 50, 53:54, 57:61, 64:76, 79:83, 86, 89, 92, 95, 98),
+       cex = 1.0, header = "Author(s) and Year",
+       pch = shapes)
+
+op <- par(cex=1.0, font=2)
+text(-0.2, 99, "Sample size")
+text(0.96, 99.1, "AUC")
+
+par(op)
+op <- par(cex=1.0, font=2)
+text(-0.8, c(1, 4, 7, 21, 27,30, 33, 36, 39, 42, 45, 48, 51, 55, 61, 75, 82, 85, 88, 91, 94, 97), pos = 4,
+     c("RM2000", "PPI", "PIV", "PCL-R", "PCL:SV", "PANSS", "OGRS2", "OGRS", "MSRAG", "LSI-R:SV", "LS/RNR (SR/N)", "LS/RNR (GR/N)", "LHA", "HKT", "HCR20v3", "HCR20v2", "H10", "FoVOx", "FAM", "DROS", "CAPP", "BARR-2002"))
+```
+
+```{r, fig.height=16, fig.width=14}
+shapes = c(15, 17)
+shapes <- shapes[as.numeric(data.violence2$group)]
+
+forest(x = data.violence2$auc, ci.lb = data.violence2$auc.lb, ci.ub = data.violence2$auc.ub, 
+       slab = data.violence2$`author(s).and.year`,
+       psize = rep(1, length(data.violence2$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(-1, 74), xlim = c(-0.8, 1.25),
+       ilab = c(data.violence2$samplesize), ilab.xpos = -0.2,
+       at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
+       rows = c(0, 3:10, 13:15, 18:19, 22:26, 29, 32, 35:38, 41:44, 47:48, 51, 54:57, 60:61, 64:66, 69),
+       cex = 1.0, header = "Author(s) and Year",
+       pch = shapes)
+
+op <- par(cex=1.0, font=2)
+text(-0.2, 73, "Sample size")
+text(0.95, 73.1, "AUC")
+
+par(op)
+op <- par(cex=1.0, font=2)
+text(-0.8, c(1, 11, 16, 20, 27, 30, 33, 39, 45, 49, 52, 58, 62, 67, 70), pos = 4,
+     c("VRS", "VRAG", "SVR 20", "Static 99R", "Static 99", "Static 2002R", "Static 2002", "START: vulnerability", "START: strength", "SORAG", "SAVRY", "SAPROF", "SACJ Min", "RRASOR", "RM2000V"))
+
+```
+
+:::callout-note
+Both Pham & Ducro (2008) and de Vogel et al. (2014) did not report the observed recidivism level or the AUC confidence intervals, therefore, could not be represented on the forest plot.
+
+\*Hanson & Thornton (2000) includes the PPI sample; \*\*Hanson & Thornton (2000) includes the Oak Ridge sample. The predictive performance of the risk assessment tools was reported separately for each sample.
+
+If a study assessed the predictive performance of multiple versions of the same tool, only the most up-to-date version is represented.
+
+■ = 95% CI reported; ▴ = 95% CI estimated
+:::
+
+### AUCs for predicting general recidivism
+
+Area under the curve statistics for all validations for risk assessment tools used to predict general recidivism.
+```{r, fig.height=17, fig.width=17}
+shapes = c(15, 17)
+shapes <- shapes[as.numeric(data.general$group)]
+
+forest(x = data.general$auc, ci.lb = data.general$auc.lower, ci.ub = data.general$auc.upper, 
+       slab = data.general$`author(s).and.year`,
+       psize = rep(1, length(data.general$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(-1, 113), xlim = c(-0.8, 1.25),
+       ilab = c(data.general$samplesize), ilab.xpos = -0.2,
+       at = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
+       rows = c(0, 3, 6:7, 10, 13, 16, 19:20, 23:25, 28:30, 33:34, 37, 40:41, 44, 47, 50:57, 60:63, 66, 69, 72, 75, 78, 81, 84, 87:89, 92:96, 99:100, 103, 106, 109),
+       cex = 1.0, header = "Author(s) and Year",
+       pch = shapes)
+
+op <- par(cex=1.0, font=2)
+text(-0.2, 112, "Sample size")
+text(1, 112.1, "AUC")
+
+
+
+par(op)
+op <- par(cex=1.0, font=2)
+text(-0.8, c(1, 4, 8, 11, 14, 17, 21, 26, 31, 35, 38, 42, 45, 48, 58, 64, 67, 70, 73, 76, 79, 82, 85, 90, 97, 101, 104, 107, 110), pos = 4,
+     c("VRS",  "VRAG-R", "VRAG", "SVR 20", "Static 2002R", "Static 99R", "Static 99", "START: vulnerability", "START: strength", "SORAG", "SAVRY", "SAPROF", "RM2000V", "PIV", "PCL-R", "PCL:SV", "PANSS", "OGRS2", "OGRS", "MSRAG", "LSI-R:SV", "LS/RNR (SR/N)", "LS/RNR (GR/N)", "HCR20v3", "HCR20v2", "H10", "FAM", "CAPP", "BARR-2002R"))
+
+```
+
+:::callout-note
+Both Pham & Ducro (2008) and Nowak & Nugter (2014) did not report the observed recidivism level or the AUC confidence intervals, therefore, could not be represented on the forest plot.
+
+If a study assessed the predictive performance of multiple versions of the same tool, only the most up-to-date version of each tool is represented.
+
+■ = 95% CI reported; ▴ = 95% CI estimated
+:::
+
+### AUCs for predicting sexual recidivism
+
+Area under the curve statistics for all validations for risk assessment tools used to predict sexual recidivism.
+```{r, fig.height=14, fig.width=11}
+shapes = c(15, 17)
+shapes <- shapes[as.numeric(data.sexual$group)]
+
+forest(x = data.sexual$auc, ci.lb = data.sexual$auc.lower, ci.ub = data.sexual$auc.upper, 
+       slab = data.sexual$`author(s).and.year`,
+       psize = rep(1, length(data.sexual$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(2, 66), xlim = c(-.5, 1.2),
+       ilab = c(data.sexual$samplesize), ilab.xpos = 0.1,
+       at = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1),
+       rows = c(3, 6, 9:11, 14, 17:22, 25, 28, 31:32, 35, 38:39, 42:44, 47, 50, 53:55, 58, 61),
+       cex = 1.0, header = "Author(s) and Year",
+       pch = shapes)
+
+op <- par(cex=1.0, font=2)
+
+text(0.1, 65, "Sample size")
+text(0.87, 65.1, "AUC")
+
+par(op)
+op <- par(cex=1.0, font=2)
+text(-.5, c(4, 7, 12, 15, 23, 26, 29, 33, 36, 40, 45, 48, 51, 56, 59, 62), pos = 4,
+     c("VRS-SO", "VRAG", "SVR-20", "Static 99R", "Static 99", "Static 2002R", "Static 2002", "SORAG", "SAPROF", "SACJ-Min", "RRASOR", "Risk Matrix 2000", "PPI", "PCL-R", "HCR20v2", "BARR 2002R"))
+
+```
+
+:::callout-note
+Pham & Ducro (2008) did not report the observed recidivism level or the AUC confidence intervals, therefore, could not be represented on the forest plot. 
+
+\*Hanson & Thornton (2000) includes the PPI sample; \*\*Hanson & Thornton (2000) includes the Oak Ridge sample. The predictive performance of the risk assessment tools was reported separately for each sample.
+
+If a study assessed the predictive performance of multiple versions of the same tool, only the most up-to-date version of each tool is represented.
+
+■ = 95% CI reported; ▴ = 95% CI estimated
+:::
+
+### Apparent, internal, and external validation efforts
+
+The number of apparent, internal and external validations was calculated in the `validation-samples.xlsx` file.
+```{r, fig.width=10, fig.height=10}
+vd <- venneuler(c(A = 3, 
+                  B = 3, 
+                  C = 47,
+                  "A&B" = 2,
+                  "A&C" = 1, 
+                  "B&C" = 1, 
+                  "A&B&C" = 1))
+
+vd$labels <- c("", "", "46")
+
+plot(vd)
+text(0.44, 0.50, "1")
+text(0.38, 0.39, "1")
+text(0.38, 0.59, "1")
+text(0.38, 0.50, "1")
+
+```
+
+### Time-at-risk for violent risk assessment instruments
+
+Time-at-risk for all validations of risk assessment tools used to predict violent recidivism.
+```{r, fig.height=22, fig.width=12}
+shapes = c(15, 17)
+shapes <- shapes[as.numeric(data.time$group)]
+colours = c("gray28", "royalblue3", "red3")
+colours <- colours[as.numeric(data.time$colour)]
+
+forest(x = data.time$auc, ci.lb = data.time$auc.lb, ci.ub = data.time$auc.ub, 
+       slab = data.time$`author(s).and.year`,
+       psize = rep(1, length(data.time$auc)),
+       xlab = "area under the curve (AUC)", refline = 0.5,
+       ylim = c(0.5, 100),  # Increased from 100 to 102 for header space
+       xlim = c(-0.8, 1.25),
+       ilab = c(data.time$samplesize), ilab.xpos = -0.1,
+       cex = 1.0, header = "Author(s) and Year",
+       pch = shapes, col = colours)
+
+op <- par(cex=1.0, font=2)
+text(-0.1, 99, "Sample size")      # Adjusted position
+text(0.90, 99.2, "AUC")            # Adjusted position
+par(op)
+```
+
+
+:::callout-note
+Area under the curve statistics for all studies for risk assessment tools used to predict violent recidivism (including non-independent and studies with small sample sizes). Here we represent the different time-at-risk for each individual study. Studies with a follow-up duration of 12 months or less are coloured in red, studies with a follow-up time of between 1-5 years are coloured in blue, and studies with a follow-up duration of over 5 years are represented in grey.
+:::
