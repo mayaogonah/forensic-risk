@@ -1,4 +1,7 @@
+# Violence risk assessment instruments in forensic psychiatric populations: a systematic review and meta-analysis
 
-This repository includes a HTML file (https://mayaogonah.github.io/forensic-risk/) created with Quarto, which details the code used to perform the analyses in the following paper:
+R/Quarto repository for the manuscript 'Violence risk assessment instruments in forensic psychiatric populations: a systematic review and meta-analysis' published in Lancet Psychiatry.
 
-Ogonah et al. Violence risk assessment instruments in forensic psychiatric populations: a systematic review and meta-analysis. Lancet Psychiatry. Oct 2023. 10.1016/S2215-0366(23)00256-0.
+Journal version of the manuscript is [here]([https://www.nature.com/articles/s44220-024-00356-5](https://www.thelancet.com/journals/lanpsy/article/PIIS2215-0366(23)00256-0/fulltext)).
+
+The reposity contains code to conduct a systematic review and meta-analysis of violence risk assessment instruments. [The HTML file]([https://mayaogonah.github.io/tbi-umbrella/](https://mayaogonah.github.io/forensic-risk/)) rendered from Quarto, outlines the key stages of analysis.
